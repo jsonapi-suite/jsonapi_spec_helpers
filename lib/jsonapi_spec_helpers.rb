@@ -41,6 +41,12 @@ RSpec::Matchers.define :be_not_in_payload do |expected|
 end
 
 module JsonapiSpecHelpers
+  def self.included(klass)
+    if defined?(Rails)
+      Dir[Rails.root.join('spec/payloads/**/*.rb')].each { |f| require f }
+    end
+  end
+
   def json
     JSON.parse(response.body)
   end
