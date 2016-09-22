@@ -1,0 +1,130 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Jsonapi spec helpers by jsonapi-suite</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Jsonapi spec helpers</h1>
+        <p></p>
+
+        <p class="view"><a href="https://github.com/jsonapi-suite/jsonapi_spec_helpers">View the Project on GitHub <small>jsonapi-suite/jsonapi_spec_helpers</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/jsonapi-suite/jsonapi_spec_helpers/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/jsonapi-suite/jsonapi_spec_helpers/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/jsonapi-suite/jsonapi_spec_helpers">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="jsonapi_spec_helpers" class="anchor" href="#jsonapi_spec_helpers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>jsonapi_spec_helpers</h1>
+
+<p>This gem provides a number of low-level helpers as well as an abstraction for asserting entire payloads.</p>
+
+<h2>
+<a id="low-level-helpers" class="anchor" href="#low-level-helpers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Low-level helpers</h2>
+
+<ul>
+<li>
+<code>json</code>: Parsed JSON from the response represented as a ruby hash.</li>
+<li>
+<code>json_item</code>: Typically used for <code>show</code> actions, this grabs the relevant attributes from the response and merges with <code>id</code> and <code>type</code>. <code>type</code> is renamed <code>jsonapi_type</code> so it does not conflict with a <code>type</code> attribute.</li>
+<li>
+<code>json_items</code>: Like <code>json_item</code> but for <code>index</code> actions. Pass indices to grab specific items, e.g. <code>json_items(0,1)</code>.</li>
+<li>
+<code>json_related_link</code>: Assert the payload has a <code>link</code> for the given relation, e.g. <code>expect(json_related_link(json_item, 'people').to eq('/people/1')</code>
+</li>
+<li>
+<code>json_included_types</code>: A unique array of all <code>type</code>s in the <code>included</code> response.</li>
+<li>
+<code>json_includes(type, *indicies)</code>: Grab from <code>included</code> and transform into a <code>json_item</code>, e.g. <code>json_includes('people')</code>.</li>
+<li>
+<code>json_include(type, index = 0)</code>: Same as <code>json_includes</code> but returns a single element instead of an array.</li>
+<li>
+<code>json_ids</code>: An array of all ids in <code>json_items</code>. Pass <code>json_ids(true)</code> to return all integers.</li>
+</ul>
+
+<h2>
+<a id="assert_payload" class="anchor" href="#assert_payload" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>assert_payload</h2>
+
+<p>In JSONAPI responses, the same object payload can be repeated across many different responses. So, instead of asserting on the response itself, you can assert the response contains a given payload. Start by defining your payloads:</p>
+
+<div class="highlight highlight-source-ruby"><pre><span class="pl-c1">JsonapiSpecHelpers</span>::<span class="pl-c1">Payload</span>.register(<span class="pl-c1">:person</span>) <span class="pl-k">do</span>
+  key(<span class="pl-c1">:name</span>)
+  key(<span class="pl-c1">:age</span>)
+<span class="pl-k">end</span></pre></div>
+
+<p>And then assert on them in specs:</p>
+
+<div class="highlight highlight-source-ruby"><pre>person <span class="pl-k">=</span> <span class="pl-c1">Person</span>.last
+<span class="pl-c"># Pass:</span>
+<span class="pl-c"># * registered payload name</span>
+<span class="pl-c"># * a record to compare against</span>
+<span class="pl-c"># * a json_item</span>
+assert_payload(<span class="pl-c1">:person</span>, person, json_include(<span class="pl-s"><span class="pl-pds">'</span>people<span class="pl-pds">'</span></span>))</pre></div>
+
+<p>This asserts:</p>
+
+<ul>
+<li>All registered keys have correct values (compared to given record)</li>
+<li>No registered keys are missing</li>
+<li>No extra keys are present in the response</li>
+</ul>
+
+<p>It's the rough code equivalent of:</p>
+
+<div class="highlight highlight-source-ruby"><pre>person <span class="pl-k">=</span> <span class="pl-c1">Person</span>.last
+json <span class="pl-k">=</span> <span class="pl-c1">JSON</span>.parse(response.body)
+included <span class="pl-k">=</span> json[<span class="pl-s"><span class="pl-pds">'</span>included<span class="pl-pds">'</span></span>].find { |<span class="pl-smi">incl</span>| incl[<span class="pl-s"><span class="pl-pds">'</span>type<span class="pl-pds">'</span></span>] <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">'</span>people<span class="pl-pds">'</span></span> }
+expect(included).to have_key(<span class="pl-s"><span class="pl-pds">'</span>name<span class="pl-pds">'</span></span>)
+expect(included[<span class="pl-s"><span class="pl-pds">'</span>name<span class="pl-pds">'</span></span>]).to eq(person.name)
+expect(included).to have_key(<span class="pl-s"><span class="pl-pds">'</span>age<span class="pl-pds">'</span></span>)
+expect(included[<span class="pl-s"><span class="pl-pds">'</span>age<span class="pl-pds">'</span></span>]).to eq(person.age)
+expect(included.keys).to match_array(<span class="pl-s"><span class="pl-pds">%w(</span>name age<span class="pl-pds">)</span></span>)</pre></div>
+
+<h3>
+<a id="custom-payloads" class="anchor" href="#custom-payloads" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Custom Payloads</h3>
+
+<p>Let's say your serializer always capitalizes <code>name</code>. In this case, the above <code>assert_record_payload</code> would fail. To make it pass, supply a block to the <code>key</code> argument:</p>
+
+<div class="highlight highlight-source-ruby"><pre><span class="pl-c1">JsonapiSpecHelpers</span>::<span class="pl-c1">Payload</span>.register(<span class="pl-c1">:person</span>) <span class="pl-k">do</span>
+  key(<span class="pl-c1">:name</span>) { |<span class="pl-smi">record</span>| record.name.upcase }
+  key(<span class="pl-c1">:age</span>)
+<span class="pl-k">end</span></pre></div>
+
+<p>The test will now pass, as we've registered a custom response comparison.</p>
+
+<p>You can customize payloads at assertion-time as well. Let's say you only want to render <code>age</code> if the current user is an admin. A spec could look something like:</p>
+
+<div class="highlight highlight-source-ruby"><pre>sign_in(<span class="pl-c1">:admin</span>)
+get <span class="pl-c1">:show</span>, <span class="pl-c1">id:</span> person.id
+assert_payload(<span class="pl-c1">:person</span>, person, json_item)
+sign_in(<span class="pl-c1">:non_admin</span>)
+get <span class="pl-c1">:show</span>, <span class="pl-c1">id:</span> person.id
+assert_payload(<span class="pl-c1">:person</span>, person, json_item) <span class="pl-k">do</span>
+  no_key(<span class="pl-c1">:age</span>)
+<span class="pl-k">end</span></pre></div>
+
+<p>The <code>no_key</code> method overrides the default <code>age</code> key and specifies this key should not be present in the response. Any keys specified in this block will override the defaults.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/jsonapi-suite">jsonapi-suite</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
