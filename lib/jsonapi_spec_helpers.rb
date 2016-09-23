@@ -58,7 +58,7 @@ module JsonapiSpecHelpers
     {}.tap do |item|
       item['id'] = data['id']
       item['jsonapi_type'] = data['type']
-      item.merge!(data['attributes'])
+      item.merge!(data['attributes']) if data.has_key?('attributes')
     end
   end
 

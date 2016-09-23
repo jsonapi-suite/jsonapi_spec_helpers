@@ -102,6 +102,19 @@ describe JsonapiSpecHelpers do
         'description'  => 'post description 1'
       })
     end
+
+    context 'when no attributes' do
+      before do
+        response_json[:data].delete(:attributes)
+      end
+
+      it 'does not blow up' do
+        expect(json_item).to eq({
+          'id'           => '1',
+          'jsonapi_type' => 'posts'
+        })
+      end
+    end
   end
 
   describe '#json_items' do
