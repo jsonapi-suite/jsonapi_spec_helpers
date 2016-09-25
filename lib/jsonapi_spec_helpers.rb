@@ -1,6 +1,3 @@
-require 'pry'
-require 'pry-byebug'
-
 require 'json'
 require 'jsonapi_spec_helpers/version'
 require 'jsonapi_spec_helpers/payload'
@@ -16,13 +13,21 @@ RSpec::Matchers.define :match_payload do |attribute, expected|
   end
 end
 
-RSpec::Matchers.define :have_payload_key do |expected|
+RSpec::Matchers.define :have_payload_key do |expected, allow_nil|
   match do |json|
-    json.has_key?(expected.to_s)
+    @has_key = json.has_key?(expected.to_s)
+    @has_value = !json[expected.to_s].nil?
+
+    if allow_nil
+      @has_key
+    else
+      @has_key && @has_value
+    end
   end
 
   failure_message do |actual|
-    "Expected JSON payload to have key '#{expected}' but was not present"
+    msg = !allow_nil && @has_key ? "nil. Use 'key(:foo, allow_nil: true)' to allow nils" : "not present"
+    "Expected JSON payload to have key '#{expected}' but was #{msg}"
   end
 
   failure_message_when_negated do |actual|
@@ -113,14 +118,17 @@ module JsonapiSpecHelpers
     end
 
     aggregate_failures "payload has correct key/values" do
-      payload.keys.each_pair do |attribute, prc|
-        if (expect(json).to have_payload_key(attribute)) == true
-          expect(json[attribute.to_s]).to match_payload(attribute, prc.call(record))
+      payload.keys.each_pair do |attribute, options|
+        prc = options[:proc]
+        if (expect(json).to have_payload_key(attribute, options[:allow_nil])) == true
+          unless options[:allow_nil]
+            expect(json[attribute.to_s]).to match_payload(attribute, prc.call(record))
+          end
         end
       end
 
       payload.no_keys.each do |no_key|
-        expect(json).to_not have_payload_key(no_key)
+        expect(json).to_not have_payload_key(no_key, {})
       end
 
       unexpected_keys = json.keys - payload.keys.keys.map(&:to_s)

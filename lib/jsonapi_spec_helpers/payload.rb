@@ -30,16 +30,17 @@ module JsonapiSpecHelpers
       @no_keys << name
     end
 
-    def key(name, &blk)
+    def key(name, options = {}, &blk)
+      options[:allow_nil] ||= false
       @no_keys.reject! { |k| k == name }
       prc = blk
       prc = ->(record) { record.send(name) } if prc.nil?
-      @keys[name] = prc
+      @keys[name] = options.merge(proc: prc)
     end
 
     def timestamps!
-      @keys[:created_at] = ->(record) { record.created_at }
-      @keys[:updated_at] = ->(record) { record.updated_at }
+      @keys[:created_at] = key(:created_at)
+      @keys[:updated_at] = key(:updated_at)
     end
   end
 end

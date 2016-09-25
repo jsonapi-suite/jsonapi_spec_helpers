@@ -258,6 +258,37 @@ describe JsonapiSpecHelpers do
         end
       end
 
+      context 'when json contains payload key, but it is nil' do
+        before do
+          response_json[:data][:attributes].merge!(title: nil)
+        end
+
+        it 'does not pass assertion' do
+          expect {
+            assert_payload(:post, post_record, json_item)
+          }.to raise_error(
+            RSpec::Expectations::ExpectationNotMetError,
+            /but was nil/
+          )
+        end
+
+        context 'and allow_nil is true' do
+          before do
+            JsonapiSpecHelpers::Payload.register(:post_with_nil_title) do
+              key(:title, allow_nil: true)
+              key(:description)
+              key(:first_title_letter) { |p| p.title[0] }
+            end
+          end
+
+          it 'does not throw an error' do
+            expect {
+              assert_payload(:post_with_nil_title, post_record, json_item)
+            }.to_not raise_error
+          end
+        end
+      end
+
       context 'when json does not contain payload key' do
         before do
           response_json[:data][:attributes].delete(:title)
