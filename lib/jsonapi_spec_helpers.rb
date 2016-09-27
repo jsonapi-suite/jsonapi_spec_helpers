@@ -4,8 +4,13 @@ require 'jsonapi_spec_helpers/payload'
 
 RSpec::Matchers.define :match_payload do |attribute, expected|
   match do |actual|
-    # cast to_json for things like Time
-    actual.to_json == expected.to_json
+    # cast as_json for things like Time
+    # use as_json instead of to_json for things like hashes
+    if expected.respond_to?(:as_json)
+      actual.as_json == expected.as_json
+    else
+      actual.to_json == expected.to_json
+    end
   end
 
   failure_message do |actual|
