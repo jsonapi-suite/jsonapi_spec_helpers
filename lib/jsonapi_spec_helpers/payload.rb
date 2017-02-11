@@ -30,7 +30,9 @@ module JsonapiSpecHelpers
       @no_keys << name
     end
 
-    def key(name, options = {}, &blk)
+    def key(name, *args, &blk)
+      options = args.last.is_a?(Hash) ? args.pop : {}
+      options[:type] = args.first
       options[:allow_nil] ||= false
       @no_keys.reject! { |k| k == name }
       prc = blk
