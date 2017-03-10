@@ -1,6 +1,14 @@
 RSpec::Matchers.define :match_payload do |attribute, expected|
-  match do |actual|
-    actual == expected
+  if expected.is_a?(Hash)
+    match do |actual|
+      expected.all? do |key, val|
+        actual.fetch(key, actual[key.to_s]) == val
+      end
+    end
+  else
+    match do |actual|
+      actual == expected
+    end
   end
 
   failure_message do |actual|

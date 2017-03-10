@@ -205,6 +205,29 @@ describe JsonapiSpecHelpers do
             )
           end
         end
+
+        context 'when json payload contains string keys, but model attribute has symbol keys' do
+          before do
+            JsonapiSpecHelpers::Payload.register(:model_with_serialization) do
+              key(:serialized_config)
+            end
+          end
+
+          let(:serial_model) {
+            double \
+              serialized_config: { foo: 'bar' }
+          }
+
+          it 'still matches the data' do
+            json_model = {
+              'serialized_config' => { 'foo' => 'bar' }
+            }
+
+            expect {
+              assert_payload(:model_with_serialization, serial_model, json_model)
+            }.to_not raise_error
+          end
+        end
       end
     end
   end
