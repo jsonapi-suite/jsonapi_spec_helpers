@@ -1,7 +1,7 @@
 RSpec::Matchers.define :match_payload do |attribute, expected|
   match do |actual|
-    if actual.respond_to?(:as_json)
-      actual = actual.as_json
+    if expected.respond_to?(:as_json)
+      expected = expected.as_json
     end
 
     actual == expected
