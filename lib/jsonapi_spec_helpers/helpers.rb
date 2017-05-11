@@ -54,5 +54,22 @@ module JsonapiSpecHelpers
       ids
     end
 
+    def jsonapi_headers
+      {
+        'CONTENT_TYPE' => 'application/vnd.api+json'
+      }
+    end
+
+    def jsonapi_post(url, payload)
+      post url, params: payload.to_json, headers: jsonapi_headers
+    end
+
+    def jsonapi_put(url, payload)
+      put url, params: payload.to_json, headers: jsonapi_headers
+    end
+
+    def jsonapi_payload(input)
+      PayloadSanitizer.new(input).sanitize
+    end
   end
 end
