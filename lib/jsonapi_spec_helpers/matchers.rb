@@ -14,7 +14,11 @@ end
 
 RSpec::Matchers.define :match_type do |attribute, type|
   match do |actual|
-    actual.is_a?(type)
+    if type.is_a?(Array)
+      type.any? { |t| actual.is_a?(t) }
+    else
+      actual.is_a?(type)
+    end
   end
 
   failure_message do |actual|

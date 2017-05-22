@@ -64,6 +64,34 @@ describe JsonapiSpecHelpers do
         end
       end
 
+      context 'when a condition that matches multiple types' do
+        it 'passes assertion if one of the types passes' do
+          json['data']['attributes']['is_foo'] = false
+          allow(post_record).to receive(:is_foo) { false }
+          expect {
+            assert_payload(:post, post_record, json_item) do
+              key(:is_foo, [TrueClass, FalseClass])
+            end
+          }.to_not raise_error
+
+          json['data']['attributes']['is_foo'] = true
+          allow(post_record).to receive(:is_foo) { true }
+          expect {
+            assert_payload(:post, post_record, json_item) do
+              key(:is_foo, [TrueClass, FalseClass])
+            end
+          }.to_not raise_error
+
+          json['data']['attributes']['is_foo'] = 'true'
+          allow(post_record).to receive(:is_foo) { 'true' }
+          expect {
+            assert_payload(:post, post_record, json_item) do
+              key(:is_foo, [TrueClass, FalseClass])
+            end
+          }.to raise_error(RSpec::Expectations::ExpectationNotMetError)
+        end
+      end
+
       context 'when json value does not match payload value' do
         before do
           allow(post_record).to receive(:title) { 'foo' }
