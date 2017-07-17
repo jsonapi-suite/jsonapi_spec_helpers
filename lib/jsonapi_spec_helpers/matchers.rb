@@ -1,3 +1,5 @@
+require 'rspec/matchers'
+
 RSpec::Matchers.define :match_payload do |attribute, expected|
   match do |actual|
     if expected.respond_to?(:as_json)
