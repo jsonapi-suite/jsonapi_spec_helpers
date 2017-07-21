@@ -1,16 +1,21 @@
 require 'json'
 require 'jsonapi_spec_helpers/version'
-require 'jsonapi_spec_helpers/matchers'
 require 'jsonapi_spec_helpers/helpers'
 require 'jsonapi_spec_helpers/payload'
 require 'jsonapi_spec_helpers/payload_sanitizer'
 
 module JsonapiSpecHelpers
   def self.included(klass)
+    # don't load RSpec until included
+    require 'jsonapi_spec_helpers/matchers'
     klass.send(:include, Helpers)
     if defined?(Rails)
-      Dir[Rails.root.join('spec/payloads/**/*.rb')].each { |f| require f }
+      load_payloads!
     end
+  end
+
+  def self.load_payloads!
+    Dir[Rails.root.join('spec/payloads/**/*.rb')].each { |f| require f }
   end
 
   def assert_payload(name, record, json, &blk)
