@@ -68,6 +68,10 @@ module JsonapiSpecHelpers
       put url, params: payload.to_json, headers: jsonapi_headers
     end
 
+    def jsonapi_delete(url)
+      delete url, headers: jsonapi_headers
+    end
+
     def jsonapi_payload(input)
       PayloadSanitizer.new(input).sanitize
     end
