@@ -42,10 +42,10 @@ it "works correctly" do
 end
 ```
 
-* `jsonapi_get(url, params)
-* `jsonapi_post(url, payload)
-* `jsonapi_put(url, payload)
-* `jsonapi_delete(url)
+* `jsonapi_get(url, params)`
+* `jsonapi_post(url, payload)`
+* `jsonapi_put(url, payload)`
+* `jsonapi_delete(url)`
 
 ## assert_payload
 
