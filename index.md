@@ -14,39 +14,6 @@ This gem provides a number of low-level helpers as well as an abstraction for as
 * `json_ids`: An array of all ids in `json_items`. Pass `json_ids(true)` to return all integers.
 * `validation_errors`: A hash of validation errors, e.g. `{ name: "can't be blank" }`
 
-## Request helpers
-
-It's recommended to use `jsonapi_get`, `jsonapi_post`, etc instead of the corresponding rspec methods. This way we ensure `jsonapi_headers` are always passed, and can be overridden. Let's say we want to add a JWT to our request headers:
-
-```ruby
-def jsonapi_headers
-  headers = super
-  headers['X-JWT'] = jwt
-  headers
-end
-
-let(:jwt) { "s0m3t0k3n" }
-
-let(:payload) do
-  {
-    data: {
-      type: 'employees',
-      attributes: { name: 'John Doe' }
-    }
-  }
-end
-
-it "works correctly" do
-  jsonapi_post("/api/v1/employees", payload)
-  # assert on response
-end
-```
-
-* `jsonapi_get(url, params)`
-* `jsonapi_post(url, payload)`
-* `jsonapi_put(url, payload)`
-* `jsonapi_delete(url)`
-
 ## assert_payload
 
 In JSONAPI responses, the same object payload can be repeated across many different responses. So, instead of asserting on the response itself, you can assert the response contains a given payload. Start by defining your payloads:
@@ -115,3 +82,36 @@ end
 ```
 
 The `no_key` method overrides the default `age` key and specifies this key should not be present in the response. Any keys specified in this block will override the defaults.
+
+## Request helpers
+
+It's recommended to use `jsonapi_get`, `jsonapi_post`, etc instead of the corresponding rspec methods. This way we ensure `jsonapi_headers` are always passed, and can be overridden. Let's say we want to add a JWT to our request headers:
+
+```ruby
+def jsonapi_headers
+  headers = super
+  headers['X-JWT'] = jwt
+  headers
+end
+
+let(:jwt) { "s0m3t0k3n" }
+
+let(:payload) do
+  {
+    data: {
+      type: 'employees',
+      attributes: { name: 'John Doe' }
+    }
+  }
+end
+
+it "works correctly" do
+  jsonapi_post("/api/v1/employees", payload)
+  # assert on response
+end
+```
+
+* `jsonapi_get(url, params)`
+* `jsonapi_post(url, payload)`
+* `jsonapi_put(url, payload)`
+* `jsonapi_delete(url)`
