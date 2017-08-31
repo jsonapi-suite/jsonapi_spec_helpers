@@ -54,10 +54,22 @@ module JsonapiSpecHelpers
       ids
     end
 
+    def validation_errors
+      @validation_errors ||= {}.tap do |errors|
+        json['errors'].each do |e|
+          errors[e['meta']['attribute'].to_sym] = e['meta']['message']
+        end
+      end
+    end
+
     def jsonapi_headers
       {
         'CONTENT_TYPE' => 'application/vnd.api+json'
       }
+    end
+
+    def jsonapi_get(url, params: {})
+      get url, params: params, headers: jsonapi_headers
     end
 
     def jsonapi_post(url, payload)
