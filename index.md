@@ -12,6 +12,40 @@ This gem provides a number of low-level helpers as well as an abstraction for as
 * `json_includes(type, *indicies)`: Grab from `included` and transform into a `json_item`, e.g. `json_includes('people')`.
 * `json_include(type, index = 0)`: Same as `json_includes` but returns a single element instead of an array.
 * `json_ids`: An array of all ids in `json_items`. Pass `json_ids(true)` to return all integers.
+* `validation_errors`: A hash of validation errors, e.g. `{ name: "can't be blank" }`
+
+## Request helpers
+
+It's recommended to use `jsonapi_get`, `jsonapi_post`, etc instead of the corresponding rspec methods. This way we ensure `jsonapi_headers` are always passed, and can be overridden. Let's say we want to add a JWT to our request headers:
+
+```ruby
+def jsonapi_headers
+  headers = super
+  headers['X-JWT'] = jwt
+  headers
+end
+
+let(:jwt) { "s0m3t0k3n" }
+
+let(:payload) do
+  {
+    data: {
+      type: 'employees',
+      attributes: { name: 'John Doe' }
+    }
+  }
+end
+
+it "works correctly" do
+  jsonapi_post("/api/v1/employees", payload)
+  # assert on response
+end
+```
+
+* `jsonapi_get(url, params)
+* `jsonapi_post(url, payload)
+* `jsonapi_put(url, payload)
+* `jsonapi_delete(url)
 
 ## assert_payload
 
