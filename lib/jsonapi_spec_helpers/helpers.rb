@@ -57,7 +57,14 @@ module JsonapiSpecHelpers
     def validation_errors
       @validation_errors ||= {}.tap do |errors|
         json['errors'].each do |e|
-          errors[e['meta']['attribute'].to_sym] = e['meta']['message']
+          attr = e['meta']['attribute'].to_sym
+          message = e['meta']['message']
+
+          if errors[attr]
+            errors[attr] = Array(errors[attr]).push(message)
+          else
+            errors[attr] = message
+          end
         end
       end
     end
