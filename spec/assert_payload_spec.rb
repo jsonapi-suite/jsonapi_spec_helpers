@@ -108,7 +108,7 @@ describe JsonapiSpecHelpers do
       end
 
       context 'when given timestamps! in payload' do
-        let(:timestamp) { Time.now }
+        let(:timestamp) { Time.now.to_json }
 
         before do
           JsonapiSpecHelpers::Payload.register(:post_with_timestamps) do
