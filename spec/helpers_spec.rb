@@ -70,6 +70,27 @@ describe JsonapiSpecHelpers do
     }
   end
 
+  let(:errors_json) do
+    {
+      'errors' => [
+        {
+          'code' => 'unprocessable_entity',
+          'status' => '422',
+          'title' => 'Validation Error',
+          'detail' => 'Patron must exist',
+          'source' => {
+            'pointer' => '/data/relationships/patron'
+          },
+          'meta' => {
+            'attribute' => 'patron',
+            'message' => 'must exist',
+            'code' => 'blank'
+          }
+        }
+      ]
+    }
+  end
+
   describe '#json_item' do
     let(:json) { show_json }
 
@@ -166,4 +187,20 @@ describe JsonapiSpecHelpers do
       })
     end
   end
+
+  describe '#validation_errors' do
+    let(:json) { errors_json }
+
+    it 'creates a hash of the errors' do
+      expect(validation_errors).to eq({:patron => 'must exist'})
+    end
+
+    describe 'when there are no errors' do
+      let(:json) { show_json }
+      it 'does not raise an error of its own' do
+        expect{ validation_errors }.not_to raise_error
+      end
+    end
+  end
+
 end
