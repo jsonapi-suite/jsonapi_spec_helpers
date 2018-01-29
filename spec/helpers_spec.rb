@@ -199,6 +199,7 @@ describe JsonapiSpecHelpers do
       let(:json) { show_json }
       it 'does not raise an error of its own' do
         expect{ validation_errors }.not_to raise_error
+        expect(validation_errors[:any_key_here]).to be_nil
       end
     end
   end
