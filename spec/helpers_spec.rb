@@ -173,6 +173,10 @@ describe JsonapiSpecHelpers do
       it 'is only includes of a given type at indices' do
         expect(json_includes('comments', 1).length).to eq(1)
       end
+
+      it 'throws when asking for an index beyond the length of the includes' do
+        expect{ json_includes('comments', 99) }.to raise_error JsonapiSpecHelpersError
+      end
     end
   end
 
