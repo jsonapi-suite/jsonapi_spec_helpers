@@ -39,7 +39,11 @@ module JsonapiSpecHelpers
       indices  = (0...included.length).to_a if indices.empty?
       includes = []
       indices.each do |index|
-        includes << json_item(from: included.at(index))
+        single_included = included.at(index)
+        if single_included.nil?
+          raise Errors::IncludedOutOfBounds.new(type, index, included)
+        end
+        includes << json_item(from: single_included)
       end
       includes
     end

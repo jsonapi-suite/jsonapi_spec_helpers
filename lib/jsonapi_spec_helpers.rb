@@ -3,6 +3,7 @@ require 'jsonapi_spec_helpers/version'
 require 'jsonapi_spec_helpers/helpers'
 require 'jsonapi_spec_helpers/payload'
 require 'jsonapi_spec_helpers/payload_sanitizer'
+require 'jsonapi_spec_helpers/errors'
 
 module JsonapiSpecHelpers
   def self.included(klass)
