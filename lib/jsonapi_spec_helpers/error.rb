@@ -1,2 +1,0 @@
-class JsonapiSpecHelpersError < StandardError
-end

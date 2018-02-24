@@ -41,8 +41,7 @@ module JsonapiSpecHelpers
       indices.each do |index|
         single_included = included.at(index)
         if single_included.nil?
-          raise JsonapiSpecHelpersError,
-            included_out_of_bounds_error(type, index, included)
+          raise Errors::IncludedOutOfBounds.new(type, index, included)
         end
         includes << json_item(from: single_included)
       end
@@ -100,13 +99,5 @@ module JsonapiSpecHelpers
     def jsonapi_payload(input)
       PayloadSanitizer.new(input).sanitize
     end
-  end
-
-private
-
-  def included_out_of_bounds_error(type, index, array)
-    "You attempted to get an item at index #{index} of the type '#{type}' " \
-    "from the included property of your JSON payload. But it contained "    \
-    "#{array.length} '#{type}'"
   end
 end

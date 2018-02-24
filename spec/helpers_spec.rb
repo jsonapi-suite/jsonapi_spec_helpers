@@ -175,7 +175,7 @@ describe JsonapiSpecHelpers do
       end
 
       it 'throws when asking for an index beyond the length of the includes' do
-        expect{ json_includes('comments', 99) }.to raise_error JsonapiSpecHelpersError
+        expect{ json_includes('comments', 99) }.to raise_error JsonapiSpecHelpers::Errors::IncludedOutOfBounds
       end
     end
   end
