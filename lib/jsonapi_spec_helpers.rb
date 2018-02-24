@@ -53,5 +53,13 @@ module JsonapiSpecHelpers
         expect(key).to be_not_in_payload
       end
     end
+
+    aggregate_failures "payload contains an id and type" do
+      unless record.id.nil?
+        expect(json['id']).to eq(record.id.to_s)
+      end
+
+      expect(json['jsonapi_type']).to_not be_nil
+    end
   end
 end

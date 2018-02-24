@@ -35,15 +35,15 @@ describe JsonapiSpecHelpers do
       end
     end
 
-    context 'when payload is valid' do
-      let(:post_record) do
-        double \
-          id: 1,
-          title: 'post title',
-          description: 'post description',
-          views: 100
-      end
+    let(:post_record) do
+      double \
+        id: 1,
+        title: 'post title',
+        description: 'post description',
+        views: 100
+    end
 
+    context 'when payload is valid' do
       it 'passes assertion' do
         assert_payload(:post, post_record, json_item)
       end
@@ -233,6 +233,44 @@ describe JsonapiSpecHelpers do
             )
           end
         end
+      end
+    end
+
+    context 'when payload contains a "relationship-only" item' do
+      before do
+        JsonapiSpecHelpers::Payload.register(:no_attribute_item) do
+        end
+      end
+
+      let(:no_attribute_record) do
+        double \
+          id: 1,
+          posts: post_record
+      end
+
+      let(:json) do
+        {
+          'data' => {
+            'type' => 'no_attributes_items',
+            'id' => '1',
+            'relationships' => {
+              'posts' => {
+                'data' => [
+                  {'type' => 'posts', 'id' => '1'}
+                ]
+              }
+            }
+          }
+        }
+      end
+
+      it 'still properly throws when no item is present' do
+        empty_json_item = {'id' => nil, 'jsonapi_type' => nil}
+        expect {
+          assert_payload(:no_attribute_item, no_attribute_record, empty_json_item)
+        }.to raise_error(
+          RSpec::Expectations::ExpectationNotMetError
+        )
       end
     end
   end
