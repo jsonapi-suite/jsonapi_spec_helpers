@@ -1,4 +1,6 @@
 require 'json'
+require 'active_support'
+require 'active_support/core_ext/string/inflections'
 require 'jsonapi_spec_helpers/version'
 require 'jsonapi_spec_helpers/helpers'
 require 'jsonapi_spec_helpers/payload'

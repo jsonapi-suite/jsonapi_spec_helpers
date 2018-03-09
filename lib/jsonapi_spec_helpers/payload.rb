@@ -55,12 +55,24 @@ module JsonapiSpecHelpers
       @no_keys.reject! { |k| k == name }
       prc = blk
       prc = ->(record) { record.send(name) } if prc.nil?
-      @keys[name] = options.merge(proc: prc)
+      @keys[member_name_for(name, options)] = options.merge(proc: prc)
     end
 
     def timestamps!
-      @keys[:created_at] = key(:created_at, String)
-      @keys[:updated_at] = key(:updated_at, String)
+      @keys[member_name_for(:created_at)] = key(:created_at, String)
+      @keys[member_name_for(:updated_at)] = key(:updated_at, String)
+    end
+
+    def member_name_style(style = :underscore)
+      @member_name_style = style
+    end
+
+    private
+
+    def member_name_for(name, options = {})
+      transform_method = options.fetch :member_name_style, (@member_name_style || :underscore)
+      transform_method = :dasherize if transform_method == :hyphen
+      name.to_s.send transform_method
     end
   end
 end

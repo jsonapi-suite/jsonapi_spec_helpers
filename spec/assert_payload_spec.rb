@@ -48,6 +48,116 @@ describe JsonapiSpecHelpers do
         assert_payload(:post, post_record, json_item)
       end
 
+      context 'with custom member name styles' do
+        let(:test_record) { double id: 1, first_name: 'First Name', last_name: 'Last Name' }
+
+        context 'when payload uses hyphens on all member names' do
+          before do
+            JsonapiSpecHelpers::Payload.register(:all_hyphens_object) do
+              member_name_style :hyphen
+              key(:first_name)
+              key(:last_name)
+            end
+          end
+
+          let(:json) do
+            {
+              'data' => {
+                'type' => 'test-object',
+                'id' => '1',
+                'attributes' => {
+                  'first-name' => 'First Name',
+                  'last-name' => 'Last Name'
+                }
+              }
+            }
+          end
+
+          it 'passes assertion' do
+            assert_payload(:all_hyphens_object, test_record, json_item)
+          end
+        end
+
+        context 'when payload uses hyphens on some member names' do
+          before do
+            JsonapiSpecHelpers::Payload.register(:some_hyphens_object) do
+              key :first_name
+              key :last_name, member_name_style: :hyphen
+            end
+          end
+
+          let(:json) do
+            {
+              'data' => {
+                'type' => 'test-object',
+                'id' => '1',
+                'attributes' => {
+                  'first_name' => 'First Name',
+                  'last-name' => 'Last Name'
+                }
+              }
+            }
+          end
+
+          it 'passes assertion' do
+            assert_payload(:some_hyphens_object, test_record, json_item)
+          end
+        end
+
+        context 'when payload uses spaces on all member names' do
+          before do
+            JsonapiSpecHelpers::Payload.register(:all_titleized_object) do
+              member_name_style :titleize
+              key :first_name
+              key :last_name
+            end
+          end
+
+          let(:json) do
+            {
+              'data' => {
+                'type' => 'test-object',
+                'id' => '1',
+                'attributes' => {
+                  'First Name' => 'First Name',
+                  'Last Name' => 'Last Name'
+                }
+              }
+            }
+          end
+
+          it 'passes assertion' do
+            assert_payload(:all_titleized_object, test_record, json_item)
+          end
+        end
+
+        context 'when payload uses spaces on some member names' do
+          before do
+            JsonapiSpecHelpers::Payload.register(:some_titleized_object) do
+              key :first_name
+              key :last_name, member_name_style: :titleize
+            end
+          end
+
+          let(:json) do
+            {
+              'data' => {
+                'type' => 'test-object',
+                'id' => '1',
+                'attributes' => {
+                  'first_name' => 'First Name',
+                  'Last Name' => 'Last Name'
+                }
+              }
+            }
+          end
+
+          it 'passes assertion' do
+            assert_payload(:some_titleized_object, test_record, json_item)
+          end
+        end
+      end
+
       context 'when json value matches payload value, but wrong type' do
         before do
           json['data']['attributes']['views'] = '100'
