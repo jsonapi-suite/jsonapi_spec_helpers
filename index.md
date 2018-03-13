@@ -7,7 +7,7 @@ This gem provides a number of low-level helpers as well as an abstraction for as
 * `json`: Parsed JSON from the response represented as a ruby hash.
 * `json_item`: Typically used for `show` actions, this grabs the relevant attributes from the response and merges with `id` and `type`. `type` is renamed `jsonapi_type` so it does not conflict with a `type` attribute.
 * `json_items`: Like `json_item` but for `index` actions. Pass indices to grab specific items, e.g. `json_items(0,1)`.
-* `json_related_link`: Assert the payload has a `link` for the given relation, e.g. `expect(json_related_link(json_item, 'people').to eq('/people/1')`
+* `json_related_link`: Assert the payload has a `link` for the given relation, e.g. `expect(json_related_link(json_item, 'people')).to eq('/people/1')`
 * `json_included_types`: A unique array of all `type`s in the `included` response.
 * `json_includes(type, *indicies)`: Grab from `included` and transform into a `json_item`, e.g. `json_includes('people')`.
 * `json_include(type, index = 0)`: Same as `json_includes` but returns a single element instead of an array.
