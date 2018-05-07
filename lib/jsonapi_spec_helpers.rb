@@ -34,7 +34,8 @@ module JsonapiSpecHelpers
         prc = options[:proc]
         if (expect(json).to have_payload_key(attribute, options[:allow_nil])) == true
           unless options[:allow_nil]
-            expect(json[attribute.to_s]).to match_payload(attribute, prc.call(record))
+            output = instance_exec(record, &prc)
+            expect(json[attribute.to_s]).to match_payload(attribute, output)
 
             if options[:type]
               expect(json[attribute.to_s]).to match_type(attribute, options[:type])
