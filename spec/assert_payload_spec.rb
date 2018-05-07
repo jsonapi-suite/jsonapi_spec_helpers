@@ -37,15 +37,28 @@ describe JsonapiSpecHelpers do
 
     context 'when payload is valid' do
       let(:post_record) do
-        double \
+        attrs = {
           id: 1,
           title: 'post title',
           description: 'post description',
           views: 100
+        }
+        double(attrs).as_null_object
       end
+
+      let(:some_let_var) { 'foo' }
 
       it 'passes assertion' do
         assert_payload(:post, post_record, json_item)
+      end
+
+      it 'has access to spec context' do
+        post_record.title = some_let_var
+        item = json_item
+        item['title'] = some_let_var
+        assert_payload(:post, post_record, item) do
+          key(:title, String) { some_let_var }
+        end
       end
 
       context 'when json value matches payload value, but wrong type' do
