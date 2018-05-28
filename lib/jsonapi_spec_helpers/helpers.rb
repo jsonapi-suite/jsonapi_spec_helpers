@@ -54,7 +54,7 @@ module JsonapiSpecHelpers
 
     def json_ids(integers = false)
       ids = json['data'].map { |d| d['id'] }
-      ids.map!(&:to_i) if integers
+      ids.map! { |id| Integer(id) } if integers
       ids
     end
 

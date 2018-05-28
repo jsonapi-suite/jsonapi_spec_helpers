@@ -150,6 +150,29 @@ describe JsonapiSpecHelpers do
         expect(json_ids(true)).to eq([1, 2])
       end
     end
+
+    context 'when ids are non-integers' do
+      let(:index_json) do
+        {
+          'data' => [
+            {
+              'type' => 'posts',
+              'id' => 'ABC123',
+              'attributes' => { }
+            },
+            {
+              'type' => 'posts',
+              'id' => 'KTHXBBQ',
+              'attributes' => { }
+            }
+          ]
+        }
+      end
+
+      it 'fails loudly when trying to cast to integers' do
+        expect{ json_ids(true) }.to raise_error ArgumentError
+      end
+    end
   end
 
   describe '#json_included_types' do
