@@ -1,3 +1,3 @@
 module JsonapiSpecHelpers
-  VERSION = "0.4.10"
+  VERSION = "1.0.alpha.1"
 end

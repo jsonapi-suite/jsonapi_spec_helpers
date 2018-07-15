@@ -1,77 +1,40 @@
 module JsonapiSpecHelpers
   module Helpers
+    extend ActiveSupport::Concern
+
     def json
-      JSON.parse(response.body)
-    end
-
-    def json_item(from: nil)
-      from = json if from.nil?
-      data = from.has_key?('data') ? from['data'] : from
-
-      {}.tap do |item|
-        item['id'] = data['id']
-        item['jsonapi_type'] = data['type']
-        item.merge!(data['attributes']) if data.has_key?('attributes')
+      if response && response.body
+        JSON.parse(response.body).with_indifferent_access
+      else
+        raise Errors::NoResponse.new
       end
     end
 
-    def json_items(*indices)
-      items   = []
-      json['data'].each_with_index do |datum, index|
-        included = indices.empty? || indices.include?(index)
-        items << json_item(from: datum) if included
-      end
-      indices.length == 1 ? items[0] : items
-    end
-
-    def json_related_link(payload, assn_name)
-      link = payload['relationships'][assn_name]['links']['related']['href']
-      fail "link for #{assn_name} not found" unless link
-      URI.decode(link)
-    end
-
-    def json_included_types
-      (json['included'] || []).map { |i| i['type'] }.uniq
-    end
-
-    def json_includes(type, *indices)
-      included = (json['included'] || []).select { |data| data['type'] == type }
-      indices  = (0...included.length).to_a if indices.empty?
-      includes = []
-      indices.each do |index|
-        single_included = included.at(index)
-        if single_included.nil?
-          raise Errors::IncludedOutOfBounds.new(type, index, included)
-        end
-        includes << json_item(from: single_included)
-      end
-      includes
-    end
-
-    def json_include(type, index = 0)
-      json_includes(type, index)[0]
-    end
-
-    def json_ids(integers = false)
-      ids = json['data'].map { |d| d['id'] }
-      ids.map! { |id| Integer(id) } if integers
-      ids
-    end
-
-    def validation_errors
-      @validation_errors ||= {}.tap do |errors|
-        return errors if json['errors'].nil?
-        json['errors'].each do |e|
-          attr = e['meta']['attribute'].to_sym
-          message = e['meta']['message']
-
-          if errors[attr]
-            errors[attr] = Array(errors[attr]).push(message)
-          else
-            errors[attr] = message
-          end
+    def jsonapi_data
+      @jsonapi_data ||= begin
+        if _jsonapi_data.is_a?(Hash)
+          node(from: _jsonapi_data)
+        else
+          _jsonapi_data.map { |datum| node(from: datum) }
         end
       end
+    end
+
+    def jsonapi_included(type = nil)
+      variable = :"@jsonapi_included#{type}"
+      memo = instance_variable_get(variable)
+      return memo if memo
+
+      nodes =  _jsonapi_included.map { |i| node(from: i) }
+      if type
+        nodes.select! { |n| n.jsonapi_type == type }
+      end
+      instance_variable_set(variable, nodes)
+      nodes
+    end
+
+    def jsonapi_errors
+      @jsonapi_errors ||= ErrorsProxy.new(json['errors'] || [])
     end
 
     def jsonapi_headers
@@ -100,8 +63,35 @@ module JsonapiSpecHelpers
       delete url, headers: jsonapi_headers
     end
 
-    def jsonapi_payload(input)
-      PayloadSanitizer.new(input).sanitize
+    def datetime(value)
+      JsonapiCompliable::Types[:datetime][:test][value]
+    end
+
+    # @api private
+    def node(from: nil)
+      from = json if from.nil?
+      data = from.has_key?('data') ? from['data'] : from
+      hash = {}
+      hash['id'] = data['id']
+      hash['jsonapi_type'] = data['type']
+      hash.merge!(data['attributes']) if data.has_key?('attributes')
+      Node.new(hash, data['relationships'], self)
+    end
+
+    private
+
+    # @api private
+    def _jsonapi_data
+      json['data'] || raise(Errors::NoData.new(json))
+    end
+
+    # @api private
+    def _jsonapi_included
+      if json.has_key?('included')
+        json['included']
+      else
+        raise Errors::NoSideloads.new(json)
+      end
     end
   end
 end
