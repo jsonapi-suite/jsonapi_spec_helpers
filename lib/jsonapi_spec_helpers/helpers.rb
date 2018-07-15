@@ -64,7 +64,7 @@ module JsonapiSpecHelpers
     end
 
     def datetime(value)
-      JsonapiCompliable::Types[:datetime][:test][value]
+      JsonapiCompliable::Types[:datetime][:read][value]
     end
 
     # @api private
