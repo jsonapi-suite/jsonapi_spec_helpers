@@ -6,229 +6,206 @@ describe JsonapiSpecHelpers do
 
   let(:instance) { klass.new }
 
-  let(:show_json) do
+  let(:json) do
     {
-      'data' => {
-        'type' => 'posts',
-        'id' => '1',
-        'attributes' => {
-          'title' => 'post title',
-          'description' => 'post description'
-        }
-      }
-    }
-  end
-
-  let(:index_json) do
-    {
-      'data' => [
+      data: [
         {
-          'type' => 'posts',
-          'id' => '1',
-          'attributes' => {
-            'title' => 'post title',
-            'description' => 'post description'
-          }
-        },
-        {
-          'type' => 'posts',
-          'id' => '2',
-          'attributes' => {
-            'title' => 'another title',
-            'description' => 'another description'
-          }
-        }
-      ]
-    }
-  end
-
-  let(:include_json) do
-    {
-      'included' => [
-        {
-          'type' => 'comments',
-          'id' => '1',
-          'attributes' => {
-            'text' => 'my comment'
-          }
-        },
-        {
-          'type' => 'comments',
-          'id' => '2',
-          'attributes' => {
-            'text' => 'another comment'
-          }
-        },
-        {
-          'type' => 'authors',
-          'id' => '9',
-          'attributes' => {
-            'name' => 'Joe Author'
-          }
-        }
-      ]
-    }
-  end
-
-  let(:errors_json) do
-    {
-      'errors' => [
-        {
-          'code' => 'unprocessable_entity',
-          'status' => '422',
-          'title' => 'Validation Error',
-          'detail' => 'Patron must exist',
-          'source' => {
-            'pointer' => '/data/relationships/patron'
-          },
-          'meta' => {
-            'attribute' => 'patron',
-            'message' => 'must exist',
-            'code' => 'blank'
-          }
-        }
-      ]
-    }
-  end
-
-  describe '#json_item' do
-    let(:json) { show_json }
-
-    it 'merges id/type/attributes' do
-      expect(json_item).to eq({
-        'id'           => '1',
-        'jsonapi_type' => 'posts',
-        'title'        => 'post title',
-        'description'  => 'post description'
-      })
-    end
-
-    context 'when no attributes' do
-      before do
-        json['data'].delete('attributes')
-      end
-
-      it 'does not blow up' do
-        expect(json_item).to eq({
-          'id'           => '1',
-          'jsonapi_type' => 'posts'
-        })
-      end
-    end
-  end
-
-  describe '#json_items' do
-    let(:json) { index_json }
-
-    context 'when passing index' do
-      it 'finds the item at the given index and merges id/type/attributes' do
-        expect(json_items(1)).to eq({
-          'id'           => '2',
-          'jsonapi_type' => 'posts',
-          'title'        => 'another title',
-          'description'  => 'another description'
-        })
-      end
-    end
-
-    context 'when not passing index' do
-      it 'finds all items' do
-        expect(json_items.length).to eq(2)
-      end
-    end
-  end
-
-  describe '#json_ids' do
-    let(:json) { index_json }
-
-    it 'grabs all ids from the list' do
-      expect(json_ids).to eq(%w(1 2))
-    end
-
-    context 'when casting as integers' do
-      it 'casts all ids as integers' do
-        expect(json_ids(true)).to eq([1, 2])
-      end
-    end
-
-    context 'when ids are non-integers' do
-      let(:index_json) do
-        {
-          'data' => [
-            {
-              'type' => 'posts',
-              'id' => 'ABC123',
-              'attributes' => { }
-            },
-            {
-              'type' => 'posts',
-              'id' => 'KTHXBBQ',
-              'attributes' => { }
+          type: 'employees',
+          id: '100',
+          attributes: { first_name: 'John' },
+          relationships: {
+            positions: {
+              data: [
+                {
+                  type: 'positions',
+                  id: '200'
+                }
+              ],
+              links: {
+                related: 'http://example.com/positions?filter[employee_id]=100'
+              }
             }
-          ]
+          }
         }
+      ],
+      included: [
+        {
+          type: 'positions',
+          id: '200',
+          attributes: { title: 'Manager' },
+          relationships: {
+            department: {
+              data: {
+                type: 'departments',
+                id: '300'
+              }
+            }
+          }
+        },
+        {
+          type: 'departments',
+          id: '300',
+          attributes: { name: 'Engineering' }
+        }
+      ]
+    }.with_indifferent_access
+  end
+
+  describe '#link' do
+    it 'returns the relevant link' do
+      link = jsonapi_data[0].link(:positions, :related)
+      expect(link).to eq('http://example.com/positions?filter[employee_id]=100')
+    end
+
+    context 'when no links' do
+      before do
+        json[:data][0][:relationships][:positions].delete(:links)
       end
 
-      it 'fails loudly when trying to cast to integers' do
-        expect{ json_ids(true) }.to raise_error ArgumentError
+      it 'raises helpful error' do
+        expect {
+          jsonapi_data[0].link(:positions, :related)
+        }.to raise_error(JsonapiSpecHelpers::Errors::LinksNotFound, "Relationship with name 'positions' has no links!")
       end
     end
   end
 
-  describe '#json_included_types' do
-    let(:json) { include_json }
+  describe '#sideloads/sideload' do
+    context 'when relation is an array' do
+      it 'returns relevant node' do
+        sl = jsonapi_data[0].sideloads(:positions)
+        expect(sl.map(&:attributes)).to eq([{
+          'id'           => '200',
+          'jsonapi_type' => 'positions',
+          'title'        => 'Manager'
+        }])
+      end
+    end
 
-    it 'is a unique array of included types' do
-      expect(json_included_types).to eq(%w(comments authors))
+    context 'when relation is a hash' do
+      it 'returns relevant node' do
+        sl = jsonapi_included[0].sideload(:department)
+        expect(sl.attributes).to eq({
+          'id'           => '300',
+          'jsonapi_type' => 'departments',
+          'name'         => 'Engineering'
+        })
+      end
+    end
+
+    context 'when not found' do
+      it 'raises helpful error' do
+        expect {
+          jsonapi_data[0].sideloads(:foo)
+        }.to raise_error(JsonapiSpecHelpers::Errors::SideloadNotFound, "Relationship with name 'foo' not found!")
+      end
+    end
+
+    context 'when nil' do
+      before do
+        json[:included][0][:relationships][:department][:data] = nil
+      end
+
+      it 'returns nil' do
+        expect(jsonapi_included[0].sideload(:department)).to be_nil
+      end
     end
   end
 
-  describe '#json_includes' do
-    let(:json) { include_json }
+  describe '#jsonapi_data' do
+    context 'when data is hash' do
+      before do
+        json[:data] = json[:data][0]
+      end
 
-    context 'when no index passed' do
-      it 'is all includes of given type' do
-        expect(json_includes('comments').length).to eq(2)
+      it 'returns a node' do
+        d = jsonapi_data
+        expect(d.is_a?(JsonapiSpecHelpers::Node)).to eq(true)
+        expect(d.id).to eq(100)
+        expect(d.jsonapi_type).to eq('employees')
+        expect(d.first_name).to eq('John')
       end
     end
 
-    context 'when index passed' do
-      it 'is only includes of a given type at indices' do
-        expect(json_includes('comments', 1).length).to eq(1)
+    context 'when data is an array' do
+      it 'returns an array of nodes' do
+        d = jsonapi_data
+        expect(d.is_a?(Array)).to eq(true)
+        expect(d.length).to eq(1)
+        expect(d[0].is_a?(JsonapiSpecHelpers::Node)).to eq(true)
+        expect(d[0].id).to eq(100)
+        expect(d[0].jsonapi_type).to eq('employees')
+        expect(d[0].first_name).to eq('John')
+      end
+    end
+
+    context 'when no data' do
+      before do
+        json.delete('data')
       end
 
-      it 'throws when asking for an index beyond the length of the includes' do
-        expect{ json_includes('comments', 99) }.to raise_error JsonapiSpecHelpers::Errors::IncludedOutOfBounds
+      it 'raises helpful error' do
+        expect {
+          jsonapi_data
+        }.to raise_error(JsonapiSpecHelpers::Errors::NoData)
       end
     end
   end
 
-  describe '#json_include' do
-    let(:json) { include_json }
+  describe '#jsonapi_included' do
+    it 'returns an array of nodes from included section of payload' do
+      i = jsonapi_included
+      expect(i.is_a?(Array)).to eq(true)
+      expect(i.length).to eq(2)
+      expect(i[0].id).to eq(200)
+      expect(i[0].jsonapi_type).to eq('positions')
+      expect(i[0].title).to eq('Manager')
+      expect(i[1].id).to eq(300)
+      expect(i[1].jsonapi_type).to eq('departments')
+      expect(i[1].name).to eq('Engineering')
+    end
+  end
 
-    it 'takes the first include of given type' do
-      expect(json_include('comments')).to eq({
-        'jsonapi_type' => 'comments',
-        'id' => '1',
-        'text' => 'my comment'
+  describe '#jsonapi_errors' do
+    let(:json) do
+      {
+        errors: [
+          {
+            code:  'unprocessable_entity',
+            status: '422',
+            title: "Validation Error",
+            detail: "Name can't be blank",
+            source: { pointer: '/data/attributes/name' },
+            meta: {
+              attribute: :name,
+              message: "can't be blank",
+              code: :blank
+            }
+          }
+        ]
+      }.with_indifferent_access
+    end
+
+    it 'returns a proxy that acts as array' do
+      errors = jsonapi_errors
+      expect(errors.length).to eq(1)
+      expect(errors[0].attribute).to eq(:name)
+      expect(errors[0].status).to eq('422')
+      expect(errors[0].title).to eq('Validation Error')
+      expect(errors[0].detail).to eq("Name can't be blank")
+      expect(errors[0].code).to eq(:blank)
+      expect(errors[0].message).to eq("can't be blank")
+    end
+
+    it 'finds errors via attribute name' do
+      errors = jsonapi_errors
+      expect(errors.name.message).to eq("can't be blank")
+    end
+
+    it 'can render simple hash' do
+      expect(errors.to_h).to eq({
+        name: "can't be blank"
       })
     end
   end
-
-  describe '#validation_errors' do
-    let(:json) { errors_json }
-
-    it 'creates a hash of the errors' do
-      expect(validation_errors).to eq({:patron => 'must exist'})
-    end
-
-    describe 'when there are no errors' do
-      let(:json) { show_json }
-      it 'does not raise an error of its own' do
-        expect{ validation_errors }.not_to raise_error
-        expect(validation_errors[:any_key_here]).to be_nil
-      end
-    end
-  end
-
 end

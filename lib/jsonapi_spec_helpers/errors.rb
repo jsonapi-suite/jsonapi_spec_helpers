@@ -1,15 +1,50 @@
 module JsonapiSpecHelpers
   module Errors
     class Base < StandardError; end
-    class IncludedOutOfBounds < Base
-      def initialize(type, index, array)
-        @type = type; @index = index; @array = array
+
+    class LinksNotFound < Base
+      def initialize(name)
+        @name = name
       end
 
       def message
-        "You attempted to get an item at index #{@index} of the type '#{@type}' " \
-        "from the included property of your JSON payload. But it contained "    \
-        "#{@array.length} '#{@type}'"
+        "Relationship with name '#{@name}' has no links!"
+      end
+    end
+
+    class SideloadNotFound < Base
+      def initialize(name)
+        @name = name
+      end
+
+      def message
+        "Relationship with name '#{@name}' not found!"
+      end
+    end
+
+    class NoResponse < Base
+      def message
+        "Cannot parse response - missing #response.body!"
+      end
+    end
+
+    class NoData < Base
+      def initialize(payload)
+        @payload = payload
+      end
+
+      def message
+        "Payload did not contain 'data'! Payload was:\n\n#{JSON.pretty_generate(@payload)}"
+      end
+    end
+
+    class NoSideloads < Base
+      def initialize(payload)
+        @payload = payload
+      end
+
+      def message
+        "Tried to find sideload, but the payload did not contain 'included'! Payload was:\n\n#{JSON.pretty_generate(@payload)}"
       end
     end
   end
