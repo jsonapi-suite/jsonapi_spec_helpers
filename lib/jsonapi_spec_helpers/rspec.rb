@@ -40,5 +40,25 @@ module JsonapiSpecHelpers
         rspec.include_context "resource testing", type: :resource
       end
     end
+
+    def self.schema!(resources = nil)
+      ::RSpec.describe 'Graphiti Schema' do
+        it 'generates a backwards-compatible schema' do
+          message = <<-MSG
+Found backwards-incompatibilities in schema! Run with FORCE_SCHEMA=true to ignore.
+
+Incompatibilities:
+
+          MSG
+
+          errors = JsonapiCompliable::Schema.generate!(resources)
+          errors.each do |e|
+            message << "#{e}\n"
+          end
+
+          expect(errors.empty?).to eq(true), message
+        end
+      end
+    end
   end
 end
