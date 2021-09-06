@@ -1,4 +1,5 @@
 require 'rspec/matchers'
+require 'jsonapi_spec_helpers/string_helpers'
 
 RSpec::Matchers.define :match_payload do |attribute, expected|
   match do |actual|
@@ -28,10 +29,11 @@ RSpec::Matchers.define :match_type do |attribute, type|
   end
 end
 
-RSpec::Matchers.define :have_payload_key do |expected, allow_nil|
+RSpec::Matchers.define :have_payload_key do |expected, allow_nil, dasherized|
   match do |json|
-    @has_key = json.has_key?(expected.to_s)
-    @has_value = !json[expected.to_s].nil?
+    expected = dasherized ? JsonapiSpecHelpers::StringHelpers.dasherize(expected) : expected.to_s
+    @has_key = json.has_key?(expected)
+    @has_value = !json[expected].nil?
 
     if allow_nil
       @has_key

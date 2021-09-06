@@ -61,6 +61,40 @@ describe JsonapiSpecHelpers do
         end
       end
 
+      context 'when dasherized: true' do
+        before do
+          JsonapiSpecHelpers::Payload.register(:post_with_dasherized_attribute) do
+            key(:dasherized_attribute)
+          end
+        end
+
+        let(:dasherized_value) { 'some value' }
+
+        let(:post_record) do
+          attrs = {
+            id: 1,
+            dasherized_attribute: dasherized_value
+          }
+          double(attrs).as_null_object
+        end
+
+        let(:json) do
+          {
+            'data' => {
+              'type' => 'posts',
+              'id' => '1',
+              'attributes' => {
+                'dasherized-attribute' => dasherized_value
+              }
+            }
+          }
+        end
+
+        it 'passes assertion' do
+          assert_payload(:post_with_dasherized_attribute, post_record, json_item, dasherized: true)
+        end
+      end
+
       context 'when json value matches payload value, but wrong type' do
         before do
           json['data']['attributes']['views'] = '100'
